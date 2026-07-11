@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import { obtenerPosts, agregarPost } from './consultas.js';
+// Se agrega darLike y eliminarPost 
+import { obtenerPosts, agregarPost, darLike, eliminarPost } from './consultas.js';
 
 const app = express();
 const PORT = 3000; 
 
-// 1. Habilitar los CORS en el servidor
+// 1. Habilitar CORS en el servidor
 app.use(cors());
 
 app.use(express.json());
@@ -32,6 +33,38 @@ app.post("/posts", async (req, res) => {
         res.status(201).json(nuevoPost);
     } catch (error) {
         console.error("Error al crear el post:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+// ================= REQUERIMIENTOS PARTE II =================
+
+// 5. Ruta PUT para modificar los likes de un post
+app.put("/posts/like/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const postActualizado = await darLike(id);
+        res.status(200).json(postActualizado);
+    } catch (error) {
+        console.error("Error al dar like al post:", error);
+        if (error.code === 404) {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+// 6. Ruta DELETE para eliminar un post
+app.delete("/posts/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        await eliminarPost(id);
+        res.status(200).json({ message: "Post eliminado con éxito" });
+    } catch (error) {
+        console.error("Error al eliminar el post:", error);
+        if (error.code === 404) {
+            return res.status(404).json({ error: error.message });
+        }
         res.status(500).json({ error: "Error interno del servidor" });
     }
 });
